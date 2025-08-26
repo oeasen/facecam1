@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Stream Overlay</title>
+    <style>
+        /* This registers our --angle variable so we can animate it smoothly */
+        @property --angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
+        }
+
+        /* --- Customizable Variables --- */
+        :root {
+            --border-width: 5px;         /* A vonal vastagsága */
+            --border-radius: 12px;       /* A sarkok kereksége */
+            --margin: 30px;              /* Távolság a képernyő szélétől */
+            
+            /* Színek a teljes, statikus kerethez (most fehér) */
+            --base-color-1: #ffffff;
+            --base-color-2: #ffffff;
+            --base-color-3: #ffffff;
+
+            /* Színek a mozgó fénycsíkhoz (most arany-sárga) */
+            --moving-color-1: #FFD700;   /* Arany */
+            --moving-color-2: #FFFF00;   /* Sárga */
+
+            --glow-spread: 25px;         /* A fénylés mértéke */
+            --base-glow-opacity: 0.4;    /* Az alap fénylés átlátszósága */
+            --moving-glow-opacity: 1.0;  /* A mozgó fénylés átlátszósága */
+            --animation-speed: 3s;       /* Az animáció sebessége */
+            --line-length: 20%;          /* A mozgó vonal hossza */
+        }
+        /* ------------------------------ */
+
+        /* Basic setup for OBS Browser Source */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            /* CRITICAL: This makes the background transparent in OBS. 
+               Here we use a dark blue to simulate the look from the image. */
+            background-color: #0c1424; 
+        }
+
+        /* The main container for all effects */
+        .neon-frame {
+            position: absolute;
+            top: var(--margin);
+            left: var(--margin);
+            right: var(--margin);
+            bottom: var(--margin);
+        }
+        
+        /* The static, full-frame border and its glow */
+        .static-border {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: var(--border-width) solid transparent;
+            border-radius: var(--border-radius);
+            
+            /* The gradient for the sharp line */
+            background: linear-gradient(135deg, var(--base-color-1), var(--base-color-2), var(--base-color-3)) border-box;
+            -webkit-mask:
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .static-border::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            
+            /* The gradient for the glow */
+            background: linear-gradient(135deg, var(--base-color-1), var(--base-color-2), var(--base-color-3));
+            transform: translate(calc(var(--border-width) * -1), calc(var(--border-width) * -1));
+            width: calc(100% + var(--border-width) * 2);
+            height: calc(100% + var(--border-width) * 2);
+
+            /* The blur effect to create the glow */
+            filter: blur(var(--glow-spread)) opacity(var(--base-glow-opacity));
+            z-index: -1;
+            border-radius: var(--border-radius);
+        }
+
+        /* The moving line effect */
+        .moving-line {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: var(--border-width) solid transparent;
+            border-radius: var(--border-radius);
+            
+            /* This is a conic-gradient that creates a small segment of color */
+            background: conic-gradient(
+                from var(--angle),
+                transparent 0%,
+                transparent calc(50% - var(--line-length) / 2),
+                var(--moving-color-1),
+                var(--moving-color-2),
+                transparent calc(50% + var(--line-length) / 2),
+                transparent 100%
+            ) border-box;
+
+            -webkit-mask:
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            
+            /* Animate the --angle variable */
+            animation: spin-around var(--animation-speed) linear infinite;
+        }
+
+        /* The glowing effect for the moving line */
+        .moving-line::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            
+            /* The gradient for the glow, matching the frame */
+            background: conic-gradient(
+                from var(--angle),
+                transparent 0%,
+                transparent calc(50% - var(--line-length) / 2),
+                var(--moving-color-1),
+                var(--moving-color-2),
+                transparent calc(50% + var(--line-length) / 2),
+                transparent 100%
+            );
+
+            transform: translate(calc(var(--border-width) * -1), calc(var(--border-width) * -1));
+            width: calc(100% + var(--border-width) * 2);
+            height: calc(100% + var(--border-width) * 2);
+
+            filter: blur(var(--glow-spread)) opacity(var(--moving-glow-opacity));
+            z-index: -1;
+            border-radius: var(--border-radius);
+            
+            /* Match the animation */
+            animation: spin-around var(--animation-speed) linear infinite;
+        }
+
+        /* Keyframe animation for the angle rotation */
+        @keyframes spin-around {
+            from { --angle: 0deg; }
+            to { --angle: 360deg; }
+        }
+    </style>
+</head>
+<body>
+    <div class="neon-frame">
+        <div class="static-border"></div>
+        <div class="moving-line"></div>
+    </div>
+</body>
+</html>
